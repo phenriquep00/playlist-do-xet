@@ -11,8 +11,42 @@ import os
 
 
 class Initializer:
+    """
+    A class used to initialize the Spotify client and fetch a playlist's tracks.
+
+    ...
+
+    Attributes
+    ----------
+    playlist_id : str
+        The ID of the Spotify playlist to fetch.
+    path_to_cache : str
+        The path to the cache file where the playlist data will be saved.
+
+    Methods
+    -------
+    start()
+        Fetches the playlist's tracks and saves them to the cache if they are not already there.
+    fetch_tracks()
+        Fetches all the tracks of the playlist.
+    process_tracks(all_tracks)
+        Processes the gathered track data.
+    is_data_in_cache()
+        Checks if the playlist data is already in the cache.
+    save_playlist_to_cache(list_of_all_tracks)
+        Saves the playlist data to the cache.
+    """
+
     # Constructor 
     def __init__(self, playlist_id, path_to_cache):
+        """
+        Parameters
+        ----------
+        playlist_id : str
+            The ID of the Spotify playlist to fetch.
+        path_to_cache : str
+            The path to the cache file where the playlist data will be saved.
+        """
         # Load the environment variables from the .env file
         load_dotenv()
         # Retrieve the values of SPOTIPY_CLIENT_ID and SPOTIPY_CLIENT_SECRET from the environment variables
@@ -35,6 +69,9 @@ class Initializer:
         self.path_to_cache = path_to_cache
 
     def start(self):
+        """
+        Fetches the playlist's tracks and saves them to the cache if they are not already there.
+        """
         # 1. check if the playlist is already in the cache
         # 2. if not, fetch the playlist
         # 2.1 save the playlist to the cache
@@ -48,6 +85,14 @@ class Initializer:
             self.save_playlist_to_cache(processed_tracks)
 
     def fetch_tracks(self):
+        """
+        Fetches all the tracks of the playlist.
+
+        Returns
+        -------
+        list
+            A list of tuples containing the track information.
+        """
         all_tracks = [] # initialize an empty list to store the tracks
 
         # Retrieve the fisrt 100 tracks of the playlist
@@ -84,6 +129,19 @@ class Initializer:
         return all_tracks
 
     def process_tracks(self, all_tracks):
+        """
+        Processes the gathered track data.
+
+        Parameters
+        ----------
+        all_tracks : list
+            A list of tuples containing the track information.
+
+        Returns
+        -------
+        list
+            A list of tuples containing the processed track information.
+        """
         # Process the gathered data
         processed_tracks = []
         process_iterator = 1
@@ -118,9 +176,25 @@ class Initializer:
 
 
     def is_data_in_cache(self):
+        """
+        Checks if the playlist data is already in the cache.
+
+        Returns
+        -------
+        bool
+            True if the playlist data is in the cache, False otherwise.
+        """
         return os.path.isfile(self.path_to_cache)
     
     def save_playlist_to_cache(self, list_of_all_tracks):
+        """
+        Saves the playlist data to the cache.
+
+        Parameters
+        ----------
+        list_of_all_tracks : list
+            A list of tuples containing the processed track information.
+        """
         # transform the all_tracks list into csv:
         df = pd.DataFrame(list_of_all_tracks, columns=[
         'track_id',
@@ -133,8 +207,6 @@ class Initializer:
         ])
         # transform the dataframe into csv
         df.to_csv(self.path_to_cache, index=False)
-
-
 if __name__ == '__main__':
     initializer = Initializer(
         playlist_id="https://open.spotify.com/playlist/5dhJsu6RdBTBH1XycaO1PA?si=e03ba6ec72394ddf",
