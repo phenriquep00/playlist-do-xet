@@ -152,7 +152,8 @@ class Initializer:
             # Make an additional API request to get the user's profile information
             print("started user profile request")
             user          = self.sp.user(added_by_id)
-            added_by_name = user['display_name']  # Get the name of the user who added the track
+            user_name = user['display_name']  # Get the name of the user who added the track
+            user_id       = user['id']  # Get the id of the user who added the track
             print("finished user profile request")
             
             # Make an additional API request to get artist information
@@ -161,19 +162,32 @@ class Initializer:
                 print(f"started artist request for {artist_name}")
                 artist_data = self.sp.search(q='artist:' + artist_name, type='artist')
                 genres      = artist_data['artists']['items'][0]['genres'] if artist_data['artists']['items'] else []
+                artist_id   = artist_data['artists']['items'][0]['id'] if artist_data['artists']['items'] else None  # Get the id of the artist
 
-                artist_info.append({'name': artist_name, 'genres': genres})
+                artist_info.append((artist_id, artist_name, genres))
                 print(f"finished artist request for {artist_name}")
 
-            genres         = [genre for info in artist_info for genre in info['genres']]
-            added_by       = added_by_name
+            genres         = [genre for info in artist_info for genre in info[2]]
             
             # append the processed track to the list of processed tracks
-            processed_tracks.append((track_id, track_name, track_album, track_artists, track_duration, genres, added_by))
+            for (artist_id, artist_name, _) in artist_info:
+                processed_tracks.append((
+                    track_id, 
+                    track_name, 
+                    track_album, 
+                    artist_id,
+                    artist_name, 
+                    track_duration, 
+                    genres, 
+                    user_id, 
+                    user_name
+                    ))
+            
             process_iterator += 1
             print(f"Processed {len(processed_tracks)} tracks")
 
         return processed_tracks
+
 
 
     def is_data_in_cache(self):
@@ -201,10 +215,12 @@ class Initializer:
         'track_id',
         'track_name',
         'track_album',
-        'track_artists',
+        'artist_id',
+        'artist_name',
         'track_duration',
         'genres',
-        'added_by',
+        'user_id',
+        'user_name'
         ])
         # transform the dataframe into csv
         df.to_csv(self.path_to_cache, index=False)
