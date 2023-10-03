@@ -156,41 +156,37 @@ class Initializer:
             user_id       = user['id']  # Get the id of the user who added the track
             print("finished user profile request")
             
-            artist_ids = []
-            artist_names = []
-            genres_set = set()
+            artist_info = []
             for artist_name in track_artists:
                 print(f"started artist request for {artist_name}")
                 artist_data = self.sp.search(q='artist:' + artist_name, type='artist')
                 genres      = artist_data['artists']['items'][0]['genres'] if artist_data['artists']['items'] else []
                 artist_id   = artist_data['artists']['items'][0]['id'] if artist_data['artists']['items'] else None  # Get the id of the artist
 
-                artist_ids.append(artist_id)
-                artist_names.append(artist_name)
-                genres_set.update(genres)
+                artist_info.append((artist_id, artist_name, genres))
                 print(f"finished artist request for {artist_name}")
 
-            genres = list(genres_set)
+            genres         = [genre for info in artist_info for genre in info[2]]
             
-            processed_tracks.append((
-                track_id, 
-                track_name, 
-                track_album, 
-                artist_ids,
-                artist_names, 
-                track_duration, 
-                genres, 
-                user_id, 
-                user_name
-            ))
+    
+            for (artist_id, artist_name, artist_genres) in artist_info:
+                processed_tracks.append((
+                    track_id, 
+                    track_name, 
+                    track_album, 
+                    artist_id,
+                    artist_name, 
+                    artist_genres,
+                    track_duration, 
+                    genres, 
+                    user_id, 
+                    user_name,
+                ))
             
             process_iterator += 1
             print(f"Processed {len(processed_tracks)} tracks")
 
         return processed_tracks
-
-
-
 
     def is_data_in_cache(self):
         """
@@ -219,6 +215,7 @@ class Initializer:
         'track_album',
         'artist_id',
         'artist_name',
+        'artist_genres',
         'track_duration',
         'genres',
         'user_id',
