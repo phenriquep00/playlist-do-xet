@@ -156,6 +156,9 @@ class DatabaseLoader:
         -------
         None
         """
+        if artist_id is None:
+            artist_id = "No Artist"
+
         sql = "SELECT * FROM TrackArtists WHERE track_id = %s AND artist_id = %s"
         val = (row['track_id'], artist_id)
         mycursor.execute(sql, val)
@@ -286,3 +289,4 @@ class DatabaseLoader:
 
         mydb.commit()
         mydb.close()
+        print("Data loaded successfully!")

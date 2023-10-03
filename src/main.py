@@ -1,4 +1,6 @@
 from classes.Initializer import Initializer
+from classes.DatabaseLoader import DatabaseLoader
+
 from utils.csv_to_db import csv_to_db
 
 
@@ -17,4 +19,5 @@ if __name__ == '__main__':
     else:
         print("Spotify client initialization failed")
 
-    csv_to_db(PATH_TO_CACHE)
+    DatabaseLoader().csv_to_db(PATH_TO_CACHE)
+    # csv_to_db(PATH_TO_CACHE)
