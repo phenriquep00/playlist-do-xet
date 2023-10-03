@@ -12,7 +12,7 @@ def csv_to_db(csv_file):
     # Establish a MySQL connection
     mydb = mysql.connector.connect(
         host=os.getenv("DB_CONNECTION_HOST"),
-        user=os.getenv("DB_CONNECTION_USER")),
+        user=os.getenv("DB_CONNECTION_USER"),
         password=os.getenv("DB_CONNECTION_PASSWORD"),
         database=os.getenv("DB_CONNECTION_DATABASE")
     )
@@ -111,3 +111,6 @@ def csv_to_db(csv_file):
 
     # Commit the transaction
     mydb.commit()
+    # close the connection
+    mydb.close()
+    
