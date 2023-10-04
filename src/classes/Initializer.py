@@ -1,6 +1,7 @@
 # Import the necessary modules
 import spotipy
 import pandas as pd
+import mysql.connector
 
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.exceptions import SpotifyException
@@ -76,52 +77,65 @@ class Initializer:
         # 2. if not, fetch the playlist
         # 2.1 save the playlist to the cache
         # 3. transform the csv into a dataframe
-        if self.is_data_in_cache():
-            print("Data is in cache")
-        else:
-            print("Data is not in cache")
-            all_tracks = self.fetch_tracks()
-            processed_tracks = self.process_tracks(all_tracks)
-            self.save_playlist_to_cache(processed_tracks)
-            print("Data saved to cache")
 
-    def fetch_tracks(self):
+        all_tracks = self.fetch_tracks(
+            last_track_index=self.get_last_fetched_track_index()
+        )
+        processed_tracks = self.process_tracks(all_tracks)
+        self.save_playlist_to_cache(processed_tracks)
+        print("Data saved to cache")
+
+    def fetch_tracks(self, last_track_index=None):
         """
-        Fetches all the tracks of the playlist.
+        Fetches all the tracks of the playlist starting from the last_track_index if provided.
+
+        Parameters
+        ----------
+        last_track_index : int, optional
+            The index of the last track from which to start fetching. If None, fetch all tracks.
 
         Returns
         -------
         list
             A list of tuples containing the track information.
         """
-        all_tracks = [] # initialize an empty list to store the tracks
+        all_tracks = []  # Initialize an empty list to store the tracks
 
-        # Retrieve the fisrt 100 tracks of the playlist
-        print("Gathering tracks...")
-        results = self.sp.playlist_tracks(self.playlist_id)
-        print(f"Found {results['total']} tracks in the playlist")
-    
-        # Iterate over the results and append the track information to the all_tracks list
-        while results['items']:
-            for item in results['items']:
-                track       = item['track']
+        # Initialize the offset for pagination
+        offset = 0
+
+        # Continue fetching until there are no more tracks to retrieve
+        while True:
+            # Fetch the next batch of tracks from the playlist with the specified offset
+            print(f"Gathering tracks with offset {offset}...")
+            results = self.sp.playlist_tracks(
+                self.playlist_id, offset=offset, limit=100
+            )
+
+            # If there are no items in the results, break the loop
+            if not results['items']:
+                break
+
+            for index, item in enumerate(results['items'], start=offset):
+                track = item['track']
                 added_by_id = item['added_by']['id']  # Get the ID of the user who added the track
-                
+
                 # Retrieve additional track details
-                track_id       = track['id']
-                track_name     = track['name']
-                track_album    = track['album']['name']
-                track_artists  = [artist['name'] for artist in track['artists']]
+                track_id = track['id']
+                track_name = track['name']
+                track_album = track['album']['name']
+                track_artists = [artist['name'] for artist in track['artists']]
                 track_duration = track['duration_ms']
-                
-                # append the track to the list of tracks
-                all_tracks.append((track_id, track_name, track_album, track_artists, track_duration, added_by_id))
-            
+
+                # Append the track to the list of tracks if it's newer than the last_track_index
+                if last_track_index is None or index > last_track_index:
+                    all_tracks.append((track_id, track_name, track_album, track_artists, track_duration, added_by_id))
+
             print(f"Gathered {len(all_tracks)} tracks")
-        
+
             # Check if there are more tracks to retrieve (pagination)
             if results['next']:
-                results = self.sp.next(results)
+                offset += 100  # Increment the offset for the next batch
             else:
                 break
 
@@ -168,7 +182,6 @@ class Initializer:
                 artist_ids.append(artist_id)
                 artist_names.append(artist_name)
                 genres_set.update(genres)
-                print(f"finished artist request for {artist_name}")
 
             genres = list(genres_set)
             
@@ -189,9 +202,6 @@ class Initializer:
 
         return processed_tracks
 
-
-
-
     def is_data_in_cache(self):
         """
         Checks if the playlist data is already in the cache.
@@ -203,26 +213,79 @@ class Initializer:
         """
         return os.path.isfile(self.path_to_cache)
     
-    def save_playlist_to_cache(self, list_of_all_tracks):
+    def save_playlist_to_cache(self, list_of_new_tracks):
         """
-        Saves the playlist data to the cache.
+        Appends the new track data to the cache file.
 
         Parameters
         ----------
-        list_of_all_tracks : list
-            A list of tuples containing the processed track information.
+        list_of_new_tracks : list
+            A list of tuples containing the processed track information for new tracks.
         """
-        # transform the all_tracks list into csv:
-        df = pd.DataFrame(list_of_all_tracks, columns=[
-        'track_id',
-        'track_name',
-        'track_album',
-        'artist_id',
-        'artist_name',
-        'track_duration',
-        'genres',
-        'user_id',
-        'user_name'
-        ])
-        # transform the dataframe into csv
-        df.to_csv(self.path_to_cache, index=False)
+        # Check if the cache file already exists
+        if os.path.isfile(self.path_to_cache):
+            # If it exists, open it in append mode
+            with open(self.path_to_cache, 'a', newline='', encoding='utf-8') as f:
+                # Create a DataFrame for the new tracks
+                df = pd.DataFrame(list_of_new_tracks, columns=[
+                    'track_id',
+                    'track_name',
+                    'track_album',
+                    'artist_id',
+                    'artist_name',
+                    'track_duration',
+                    'genres',
+                    'user_id',
+                    'user_name'
+                ])
+                # Append the new data to the end of the file
+                df.to_csv(f, mode='a', header=False, index=False)
+        else:
+            # If it doesn't exist, create a new file
+            df = pd.DataFrame(list_of_new_tracks, columns=[
+                'track_id',
+                'track_name',
+                'track_album',
+                'artist_id',
+                'artist_name',
+                'track_duration',
+                'genres',
+                'user_id',
+                'user_name'
+            ])
+            df.to_csv(self.path_to_cache, index=False)
+
+    def get_last_fetched_track_index(self):
+        """
+        Retrieves the index of the last fetched track from the database.
+
+        Returns
+        -------
+        int or None
+            The index of the last fetched track or None if no tracks have been fetched yet.
+        """
+        try:
+            # Establish a connection to the database
+            mydb = mysql.connector.connect(
+                host=os.getenv("DB_CONNECTION_HOST"),
+                user=os.getenv("DB_CONNECTION_USER"),
+                password=os.getenv("DB_CONNECTION_PASSWORD"),
+                database=os.getenv("DB_CONNECTION_DATABASE")
+            )
+
+            mycursor = mydb.cursor()
+
+            # Execute a query to count the number of rows in the Tracks table
+            query = "SELECT COUNT(*) FROM Tracks"
+            mycursor.execute(query)
+
+            last_track_index = mycursor.fetchone()[0]
+
+            # Close the database connection
+            mydb.close()
+
+            return last_track_index
+
+        except Exception as e:
+            print(f"Error fetching last track index from the database: {e}")
+            return None
