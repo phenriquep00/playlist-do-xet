@@ -202,16 +202,6 @@ class Initializer:
 
         return processed_tracks
 
-    def is_data_in_cache(self):
-        """
-        Checks if the playlist data is already in the cache.
-
-        Returns
-        -------
-        bool
-            True if the playlist data is in the cache, False otherwise.
-        """
-        return os.path.isfile(self.path_to_cache)
     
     def save_playlist_to_cache(self, list_of_new_tracks):
         """
