@@ -1,7 +1,6 @@
-import csv
 import mysql.connector
-import ast
 from dotenv import load_dotenv
+
 import os
 
 
@@ -252,14 +251,14 @@ class DatabaseLoader:
             mycursor.execute(sql, val)
 
     @staticmethod
-    def csv_to_db(csv_file):
+    def csv_to_db(processed_tracks):
         """
-        Loads data from a CSV file into the MySQL database.
+        Loads data from the processed_tracks list into the MySQL database.
 
         Parameters
         ----------
-        csv_file : str
-            The path to the CSV file.
+        processed_tracks : list
+            A list of tuples containing track information.
 
         Returns
         -------
@@ -268,24 +267,30 @@ class DatabaseLoader:
         mydb = DatabaseLoader.establish_connection()
         mycursor = mydb.cursor()
 
-        with open(csv_file, 'r', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                DatabaseLoader.insert_user_if_not_exists(mycursor, row)
-                DatabaseLoader.insert_track_if_not_exists(mycursor, row)
+        for track_info in processed_tracks:
+            (track_id, track_name, track_album, artist_ids, artist_names, 
+             track_duration, genres, user_id, user_name) = track_info
 
-                artist_ids = ast.literal_eval(row['artist_id'])
-                artist_names = ast.literal_eval(row['artist_name'])
-                for artist_id, artist_name in zip(artist_ids, artist_names):
-                    DatabaseLoader.insert_artist_if_not_exists(mycursor, artist_id, artist_name)
-                    DatabaseLoader.insert_track_artist_relation_if_not_exists(mycursor, row, artist_id)
+            DatabaseLoader.insert_user_if_not_exists(mycursor, {'user_id': user_id, 'user_name': user_name})
+            DatabaseLoader.insert_track_if_not_exists(
+                mycursor, {
+                    'track_id': track_id,
+                    'track_name': track_name,
+                    'track_album': track_album,
+                    'track_duration': track_duration,
+                    'user_id': user_id
+                }
+            )
 
-                genres = ast.literal_eval(row['genres'])
-                for genre in genres:
-                    genre_id = DatabaseLoader.insert_genre_if_not_exists(mycursor, genre)
-                    DatabaseLoader.insert_track_genre_relation_if_not_exists(mycursor, row, genre_id)
+            for artist_id, artist_name in zip(artist_ids, artist_names):
+                DatabaseLoader.insert_artist_if_not_exists(mycursor, artist_id, artist_name)
+                DatabaseLoader.insert_track_artist_relation_if_not_exists(mycursor, {'track_id': track_id}, artist_id)
 
-                DatabaseLoader.insert_user_track_relation_if_not_exists(mycursor, row)
+            for genre in genres:
+                genre_id = DatabaseLoader.insert_genre_if_not_exists(mycursor, genre)
+                DatabaseLoader.insert_track_genre_relation_if_not_exists(mycursor, {'track_id': track_id}, genre_id)
+
+            DatabaseLoader.insert_user_track_relation_if_not_exists(mycursor, {'user_id': user_id, 'track_id': track_id})
 
         mydb.commit()
         mydb.close()

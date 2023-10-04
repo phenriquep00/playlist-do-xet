@@ -39,7 +39,7 @@ class Initializer:
     """
 
     # Constructor 
-    def __init__(self, playlist_id, path_to_cache):
+    def __init__(self, playlist_id):
         """
         Parameters
         ----------
@@ -67,7 +67,6 @@ class Initializer:
             self.sp = None
 
         self.playlist_id = playlist_id
-        self.path_to_cache = path_to_cache
 
     def start(self):
         """
@@ -82,8 +81,9 @@ class Initializer:
             last_track_index=self.get_last_fetched_track_index()
         )
         processed_tracks = self.process_tracks(all_tracks)
-        self.save_playlist_to_cache(processed_tracks)
-        print("Data saved to cache")
+        print("tracks have been processed!")
+
+        return processed_tracks
 
     def fetch_tracks(self, last_track_index=None):
         """
@@ -201,49 +201,6 @@ class Initializer:
             print(f"Processed {len(processed_tracks)} tracks")
 
         return processed_tracks
-
-    
-    def save_playlist_to_cache(self, list_of_new_tracks):
-        """
-        Appends the new track data to the cache file.
-
-        Parameters
-        ----------
-        list_of_new_tracks : list
-            A list of tuples containing the processed track information for new tracks.
-        """
-        # Check if the cache file already exists
-        if os.path.isfile(self.path_to_cache):
-            # If it exists, open it in append mode
-            with open(self.path_to_cache, 'a', newline='', encoding='utf-8') as f:
-                # Create a DataFrame for the new tracks
-                df = pd.DataFrame(list_of_new_tracks, columns=[
-                    'track_id',
-                    'track_name',
-                    'track_album',
-                    'artist_id',
-                    'artist_name',
-                    'track_duration',
-                    'genres',
-                    'user_id',
-                    'user_name'
-                ])
-                # Append the new data to the end of the file
-                df.to_csv(f, mode='a', header=False, index=False)
-        else:
-            # If it doesn't exist, create a new file
-            df = pd.DataFrame(list_of_new_tracks, columns=[
-                'track_id',
-                'track_name',
-                'track_album',
-                'artist_id',
-                'artist_name',
-                'track_duration',
-                'genres',
-                'user_id',
-                'user_name'
-            ])
-            df.to_csv(self.path_to_cache, index=False)
 
     def get_last_fetched_track_index(self):
         """
