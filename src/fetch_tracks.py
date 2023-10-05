@@ -22,12 +22,13 @@ def fetch_tracks(sp_client, last_track_index=None):
         all_tracks = []  # Initialize an empty list to store the tracks
 
         # Initialize the offset for pagination
-        offset = 0
+        offset = last_track_index
+        print(f"total of tracks in the db: {last_track_index}")
 
         # Continue fetching until there are no more tracks to retrieve
         while True:
             # Fetch the next batch of tracks from the playlist with the specified offset
-            print(f"Gathering tracks with offset {offset}...")
+            print(f"Gathering tracks from the playlist starting from track number: {offset}...")
             results = sp_client.playlist_tracks(
                 os.environ["PLAYLIST_URI"], offset=offset, limit=100
             )
@@ -58,7 +59,5 @@ def fetch_tracks(sp_client, last_track_index=None):
                 offset += 100  # Increment the offset for the next batch
             else:
                 break
-
-        print("Finished gathering tracks.")
 
         return all_tracks
