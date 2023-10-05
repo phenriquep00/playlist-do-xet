@@ -1,20 +1,25 @@
-from classes.Initializer import Initializer
+from lib.spClient import generate_sp_client
+from helper.get_last_fetched_track_index import get_last_fetched_track_index
+from fetch_tracks import fetch_tracks
+from process_tracks import process_tracks
 from classes.DatabaseLoader import DatabaseLoader
-
-from utils.csv_to_db import csv_to_db
 
 
 if __name__ == '__main__':
-    PLAYLIST_URI = "https://open.spotify.com/playlist/5dhJsu6RdBTBH1XycaO1PA?si=e03ba6ec72394ddf"
+    sp = generate_sp_client()
 
 
-    initializer = Initializer(
-        playlist_id=PLAYLIST_URI,
+    last_fetched_track_index = get_last_fetched_track_index()
+
+    tracks = fetch_tracks(
+        sp_client=sp, 
+        last_track_index=last_fetched_track_index
+        )
+
+    processed_tracks = process_tracks(
+        sp_client=sp,
+        all_tracks=tracks
     )
 
-    if initializer.sp is not None:
-        processed_tracks = initializer.start()
-    else:
-        print("Spotify client initialization failed")
 
     DatabaseLoader().csv_to_db(processed_tracks=processed_tracks)
