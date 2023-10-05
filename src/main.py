@@ -5,6 +5,10 @@ from process_tracks import process_tracks
 from classes.DatabaseLoader import DatabaseLoader
 
 
+# TODO: 
+# 1. Add documentation to the functions
+# 2. Create a template .env file to put on the remote repo
+
 if __name__ == '__main__':
     sp = generate_sp_client()
 
