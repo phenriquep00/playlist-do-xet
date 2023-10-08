@@ -5,9 +5,11 @@ from process_tracks import process_tracks
 from classes.DatabaseLoader import DatabaseLoader
 
 
+# TODO: 
+# 1. Add documentation to the functions
+
 if __name__ == '__main__':
     sp = generate_sp_client()
-
 
     last_fetched_track_index = get_last_fetched_track_index()
 
@@ -20,6 +22,5 @@ if __name__ == '__main__':
         sp_client=sp,
         all_tracks=tracks
     )
-
 
     DatabaseLoader().csv_to_db(processed_tracks=processed_tracks)
