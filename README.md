@@ -1,1 +1,1 @@
-# playlist do xat data analysis repository
+# playlist do xet data analysis repository
