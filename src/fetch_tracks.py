@@ -38,14 +38,14 @@ def fetch_tracks(sp_client, last_track_index=None):
                 break
 
             for index, item in enumerate(results['items'], start=offset):
-                track = item['track']
+                track       = item['track']
                 added_by_id = item['added_by']['id']  # Get the ID of the user who added the track
 
                 # Retrieve additional track details
-                track_id = track['id']
-                track_name = track['name']
-                track_album = track['album']['name']
-                track_artists = [artist['name'] for artist in track['artists']]
+                track_id       = track['id']
+                track_name     = track['name']
+                track_album    = track['album']['name']
+                track_artists  = [artist['name'] for artist in track['artists']]
                 track_duration = track['duration_ms']
 
                 # Append the track to the list of tracks if it's newer than the last_track_index

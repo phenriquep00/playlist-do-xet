@@ -8,12 +8,12 @@ def process_tracks(sp_client, all_tracks):
             # Make an additional API request to get the user's profile information
             # TODO: check if the user already exists on db, if so just get the info from it, and if not do the api request
             user          = sp_client.user(added_by_id)
-            user_name = user['display_name']  # Get the name of the user who added the track
+            user_name     = user['display_name']  # Get the name of the user who added the track
             user_id       = user['id']  # Get the id of the user who added the track
             
-            artist_ids = []
+            artist_ids   = []
             artist_names = []
-            genres_set = set()
+            genres_set   = set()
             for artist_name in track_artists:
                 artist_data = sp_client.search(q='artist:' + artist_name, type='artist')
                 genres      = artist_data['artists']['items'][0]['genres'] if artist_data['artists']['items'] else []

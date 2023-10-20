@@ -7,8 +7,8 @@ def get_last_fetched_track_index():
         try:
             # Establish a connection to the database
             mydb = mysql.connector.connect(
-                host=os.getenv("DB_CONNECTION_HOST"),
-                user=os.getenv("DB_CONNECTION_USER"),
+                host    =os.getenv("DB_CONNECTION_HOST"),
+                user    =os.getenv("DB_CONNECTION_USER"),
                 password=os.getenv("DB_CONNECTION_PASSWORD"),
                 database=os.getenv("DB_CONNECTION_DATABASE")
             )
