@@ -13,6 +13,9 @@ if __name__ == '__main__':
 
     last_fetched_track_index = get_last_fetched_track_index()
 
+    if last_fetched_track_index is None:
+        last_fetched_track_index = 0
+
     tracks = fetch_tracks(
         sp_client=sp, 
         last_track_index=last_fetched_track_index
